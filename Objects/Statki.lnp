@@ -1,0 +1,19 @@
+--cpu Cortex-M3
+".\objects\main.o"
+".\objects\display.o"
+".\objects\lcd_ili9325.o"
+".\objects\asciilib.o"
+".\objects\open1768_lcd.o"
+".\objects\tp_open1768.o"
+".\objects\calibration.o"
+".\objects\buttons_open1768.o"
+".\objects\uart_lpc17xx.o"
+".\objects\gpdma_lpc17xx.o"
+".\objects\gpio_lpc17xx.o"
+".\objects\pin_lpc17xx.o"
+".\objects\startup_lpc17xx.o"
+".\objects\system_lpc17xx.o"
+--strict --scatter ".\Objects\Statki.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\Listings\Statki.map" -o .\Objects\Statki.axf
