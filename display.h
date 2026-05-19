@@ -26,6 +26,8 @@ void fill_rectangle(uint16_t x, uint16_t y, uint16_t color);
 
 void draw_ship(uint16_t x, uint16_t y, uint8_t size, Direction direction, uint16_t color);
 
+void which_cell(int x, int y, int *idx_x, int *idx_y);
+
 void WriteChar(int x, int y, char c, uint16_t color, int scale);
 
 #endif

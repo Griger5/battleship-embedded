@@ -1,5 +1,10 @@
 #include "calibration.h"
 
+void avg_touch_xy(int x[5], int y[5], int *tx, int *ty) {
+	*tx = x[0] + x[1] + x[2] + x[3] + x[4];
+	*ty = y[0] + y[1] + y[2] + y[3] + y[4];
+}
+
 void calib_calculate(Point lcd[3], Point touch[3], CalibrationMatrix* m){
 	float x1 = touch[0].x;
 	float y1 = touch[0].y;
@@ -33,5 +38,5 @@ void calib_calculate(Point lcd[3], Point touch[3], CalibrationMatrix* m){
 
 void calib_transform(CalibrationMatrix* m, int tx, int ty, int* lcd_x, int* lcd_y){
 	*lcd_x = (int)(m->a * tx + m->b * ty + m->c);
-	*lcd_y = (int)(m->c * tx + m->d * ty + m->e);
+	*lcd_y = (int)(m->d * tx + m->e * ty + m->f);
 }

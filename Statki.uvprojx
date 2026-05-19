@@ -429,6 +429,16 @@
               <FileType>5</FileType>
               <FilePath>.\calibration.h</FilePath>
             </File>
+            <File>
+              <FileName>battleship.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\game_logic\battleship.c</FilePath>
+            </File>
+            <File>
+              <FileName>battleship.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\game_logic\battleship.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

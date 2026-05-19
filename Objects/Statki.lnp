@@ -6,6 +6,7 @@
 ".\objects\open1768_lcd.o"
 ".\objects\tp_open1768.o"
 ".\objects\calibration.o"
+".\objects\battleship.o"
 ".\objects\buttons_open1768.o"
 ".\objects\uart_lpc17xx.o"
 ".\objects\gpdma_lpc17xx.o"

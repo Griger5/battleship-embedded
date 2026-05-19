@@ -20,7 +20,6 @@ void myUART_Thread(const void* args){
 	//}
 }
 
-
 typedef enum {
 	CAL,
 	START,
@@ -32,10 +31,8 @@ typedef enum {
 
 static State state = CAL;
 
-volatile Point lcd[3] = {{70, 30}, {70,210}, {250, 30}};
-volatile Point touch[3] = {{}, {}, {}};
-volatile CalibrationMatrix calib;
-
+volatile uint8_t touch_pending = 0;
+	
 void fill( uint16_t color ){
 	lcdWriteReg(0x0003, 0);
 	for(int i = 0; i < 320; i++ ){
@@ -53,17 +50,16 @@ void TouchToLCD(int x, int y, int *x_lcd, int *y_lcd) {
 }
 
 bool insideTouchArea(int x, int y) {
-	if (x > 20 && x < 1900 && y > 20 && y < 3500) {
+	if (x > 20 && x < 2800 && y > 20 && y < 3500) {
 		return true;
 	}  
 	return false;
 }
 
-
 volatile uint32_t msTicks = 0;
 
 void SysTick_Handler(void) {
-	USARTdrv->Send("systick", 7);
+	//USARTdrv->Send("systick", 7);
 	msTicks++;
 }
 
@@ -76,15 +72,15 @@ void wait(uint32_t t) {
 void EINT3_IRQHandler(){
 	//	if((LPC_GPIOINT->IO0IntEnF & (1 << 19) ) == (1 << 19))
 	static int counter = 0;
-	USARTdrv->Send("handler", 7);
+	//USARTdrv->Send("handler", 7);
 	switch (state) {
-		USARTdrv->Send("switch", 6);
+		//USARTdrv->Send("switch", 6);
 		case CAL: {
-				int x;
-				int y;
-				touchpanelGetXY(&y, &x);
-				USARTdrv->Send("case", 4);
-				if (insideTouchArea(x,y)) {
+				//int x;
+				//int y;
+				//touchpanelGetXY(&y, &x);
+				//USARTdrv->Send("case", 4);
+				/*if (insideTouchArea(x,y)) {
 					USARTdrv->Send("inside", 6);
 					touch[counter].x = x;
 					touch[counter].y = y;
@@ -104,8 +100,11 @@ void EINT3_IRQHandler(){
 					calib.d = calib_temp.d;
 					calib.e = calib_temp.e;
 					calib.f = calib_temp.f;
-				}
-				wait(1);
+				}*/
+				//wait(1000);
+				LPC_GPIOINT->IO0IntEnF &= ~(1 << 19);
+				LPC_GPIOINT->IO0IntClr =  (1 << 19);
+				touch_pending = 1;
 				break;
 			}
 			case START:
@@ -145,6 +144,10 @@ int main() {
 	
 	fill(LCDWhite);
 	
+	CalibrationMatrix calib;
+	Point lcd[3] = {{70, 30}, {120,180}, {250, 80}};
+	Point touch[3] = {{}, {}, {}};
+	
 	/*draw_gameboard();
 	// start board x = 30
 	// start board y = 70
@@ -158,27 +161,48 @@ int main() {
 	int y;
 	int x_lcd;
 	int y_lcd;
+	int counter = 0;
 	
 	WriteChar(lcd[0].x - 4, lcd[0].y - 6, 'X', LCDRed, 1);
 	WriteChar(lcd[1].x - 4, lcd[1].y - 6, 'X', LCDRed, 1);
 	WriteChar(lcd[2].x - 4, lcd[2].y - 6, 'X', LCDRed, 1);
 	
+	wait(2);
+	USARTdrv->Send("\nZZZZZZZ\n", 10);
+	
 	while (1){
 		switch (state) {
-		USARTdrv->Send("switch", 6);
+		//USARTdrv->Send("switch", 6);
 		case CAL: {
 				int x;
 				int y;
-				touchpanelGetXY(&y, &x);
-				USARTdrv->Send("case", 4);
+				int correct_x[5];
+				int correct_y[5];
+				int correct_points = 0;
+				while (correct_points < 5) {
+					USARTdrv->Send("AAAAA", 5);
+					touchpanelGetXY(&y, &x);
+					//if (insideTouchArea(x,y)) {
+						correct_x[correct_points] = x;
+						correct_y[correct_points] = y;
+						correct_points++;
+					char str[1];
+					sprintf(str, "%d", correct_points);
+					USARTdrv->Send(str, 1);
+					//}
+				}
+				
+				avg_touch_xy(correct_x, correct_y, &x, &y);
+				//USARTdrv->Send("case", 4);
 				if (insideTouchArea(x,y)) {
-					USARTdrv->Send("inside", 6);
+					//USARTdrv->Send("inside", 6);
 					touch[counter].x = x;
 					touch[counter].y = y;
 					counter++;
+					USARTdrv->Send("counter", 7);
 				}
 				if (counter == 3) {
-					USARTdrv->Send("counter", 7);				
+					USARTdrv->Send("counter done\n", 13);				
 					state = START;
 					Point lcd_temp[3] = {lcd[0], lcd[1], lcd[2]};
 					Point touch_temp[3] = {touch[0], touch[1], touch[2]};
@@ -192,12 +216,89 @@ int main() {
 					calib.e = calib_temp.e;
 					calib.f = calib_temp.f;
 				}
-				wait(1);
+				if (insideTouchArea(x,y)) {
+					char str[3] = {0};
+					sprintf(str, "%d", x);
+					USARTdrv->Send(str, 3);
+					USARTdrv->Send("   ", 3);
+					str[0] = '\0';
+					str[1] = '\0';
+					str[2] = '\0';
+					sprintf(str, "%d", y);
+					USARTdrv->Send(str, 3);
+					USARTdrv->Send("\n", 1);
+					wait(1000);
+				}
+				//USARTdrv->Send("ABC", 3);
+				touch_pending = 0;
+				LPC_GPIOINT->IO0IntEnF |= (1 << 19);
 				break;
 			}
-			case START:
+			case START: {
+				/*fill(LCDWhite);
+				int x;
+				int y;
+				int lcd_x;
+				int lcd_y;
+				touchpanelGetXY(&y, &x);
+				if (insideTouchArea(x,y)) {
+					calib_transform(&calib, y, x, &lcd_x, &lcd_y);
+					fill_rectangle(lcd_x, lcd_y, LCDRed);
+				}*/
+				//USARTdrv->Send("start", 5);
+				/*char str[10] = {0};
+				sprintf(str, "%d", touch[0].y);
+				USARTdrv->Send(str, 4);
+				USARTdrv->Send(" ", 1);*/
+				//sprintf(str, "%d", touch[0].y);
+				//USARTdrv->Send("\n", 1);
+				//USARTdrv->Send(str, 4);
+				/*sprintf(str, "%d", touch[1].x);
+				USARTdrv->Send(str, 4);
+				USARTdrv->Send(" ", 1);
+				sprintf(str, "%d", touch[1].y);
+				USARTdrv->Send(str, 4);
+				USARTdrv->Send("\n", 1);*/
+				USARTdrv->Send("counter done", 12);
+				char str[8] = {0};
+/*				sprintf(str, "%f", calib.a);
+				USARTdrv->Send(str, 8);
+				USARTdrv->Send("   ", 3);
+				sprintf(str, "%f", calib.b);
+				USARTdrv->Send(str, 8);
+				USARTdrv->Send("   ", 3);*/
+				/*sprintf(str, "%f", calib.c);
+				USARTdrv->Send(str, 8);
+				USARTdrv->Send("   ", 3);
+				sprintf(str, "%f", calib.d);
+				USARTdrv->Send(str, 8);
+				USARTdrv->Send("   ", 3);
+				sprintf(str, "%f", calib.e);
+				USARTdrv->Send(str, 8);
+				USARTdrv->Send("   ", 3);
+				sprintf(str, "%f", calib.f);
+				USARTdrv->Send(str, 8);*/
+				WriteChar(160 - 4, 120 - 6, 'X', LCDBlue, 1);
+				state = SET;
 				break;
+			}
 			case SET:
+				draw_gameboard();
+				int x;
+				int y;
+				int lcd_x;
+				int lcd_y;
+				touchpanelGetXY(&y, &x);
+				if (insideTouchArea(x,y)) {
+					calib_transform(&calib, y, x, &lcd_x, &lcd_y);
+					//fill_rectangle(lcd_x, lcd_y, LCDRed);
+					char str[3] = {0};
+					sprintf(str, "%d", lcd_x);
+					USARTdrv->Send(str, 4);
+					USARTdrv->Send("   ", 3);
+					sprintf(str, "%d", lcd_y);
+					USARTdrv->Send(str, 4);
+				}
 				break;
 			case MY_TURN:
 				break;
@@ -205,8 +306,8 @@ int main() {
 				break;
 			case FINISH:
 				break;
-	}
-		USARTdrv->Send("main", 4);
-
+		}
+		//wait(2000);
+		//USARTdrv->Send("main", 4);
 	}
 }
