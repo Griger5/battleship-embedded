@@ -5,7 +5,8 @@
 
 #define BOARD_SIZE 12
 #define NUM_SHIPS 5
-#define TOTAL_CELLS 17 // 5+4+3+3+2 ship cells
+#define TOTAL_CELLS 17
+#define BOARD_ROW_BYTES 3
 
 typedef enum {
     WATER = 0,
@@ -41,26 +42,37 @@ typedef enum {
 
 typedef struct {
     const char *name;
-    uint8_t     size;
+    uint8_t size;
 } ShipDef;
 
 typedef struct {
     uint8_t row;
     uint8_t col;
     uint8_t size;
-    uint8_t horizontal; // 1 = left-to-right, 0 = top-to-bottom
+    uint8_t horizontal;
     uint8_t hits;
     uint8_t placed;
 } Ship;
 
 typedef struct {
-    uint8_t own [BOARD_SIZE][BOARD_SIZE];
-    uint8_t track[BOARD_SIZE][BOARD_SIZE];
-    int8_t ship_id[BOARD_SIZE][BOARD_SIZE];
+    uint8_t own  [BOARD_SIZE][BOARD_ROW_BYTES];
+    uint8_t track[BOARD_SIZE][BOARD_ROW_BYTES];
     Ship ships[NUM_SHIPS];
     uint8_t ships_placed;
     uint8_t ships_alive;
 } Player;
+
+static inline uint8_t board_get(const uint8_t board[][BOARD_ROW_BYTES], uint8_t r, uint8_t c) {
+    uint8_t byte_idx = c >> 2;
+    uint8_t bit_off  = (c & 0x03) << 1;
+    return (board[r][byte_idx] >> bit_off) & 0x03;
+}
+
+static inline void board_set(uint8_t board[][BOARD_ROW_BYTES], uint8_t r, uint8_t c, uint8_t val) {
+    uint8_t byte_idx = c >> 2;
+    uint8_t bit_off  = (c & 0x03) << 1;
+    board[r][byte_idx] = (uint8_t)((board[r][byte_idx] & ~(0x03 << bit_off)) | ((val & 0x03) << bit_off));
+}
 
 const ShipDef *ship_defs(void);
 
@@ -76,4 +88,4 @@ void record_shot(Player *p, uint8_t row, uint8_t col, ShotResult result);
 
 uint8_t all_sunk(const Player *p);
 
-#endif // BATTLESHIP_H
+#endif /* BATTLESHIP_H */
