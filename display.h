@@ -7,7 +7,7 @@
 #include "lcd_lib/asciiLib.h"
 
 #define START_X 30
-#define START_Y 70
+#define START_Y 75
 #define CELL_WIDTH 15
 #define BOARD_SIZE 12
 

@@ -16,8 +16,11 @@
 .\objects\main.o: lcd_lib/LCD_ILI9325.h
 .\objects\main.o: tp_lib/TP_Open1768.h
 .\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\main.o: C:\Keil_v5\ARM\PACK\Keil\MDK-Middleware\7.8.0\Board\Board_Buttons.h
 .\objects\main.o: display.h
 .\objects\main.o: lcd_lib/LCD_ILI9325.h
 .\objects\main.o: lcd_lib/asciiLib.h
 .\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 .\objects\main.o: calibration.h
+.\objects\main.o: game_logic/battleship.h
+.\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h

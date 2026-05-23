@@ -4,9 +4,13 @@
 #include "lcd_lib/Open1768_LCD.h"
 #include "lcd_lib/LCD_ILI9325.h"
 #include "tp_lib/TP_Open1768.h"
+#include "Board_Buttons.h"
 
 #include "display.h"
 #include "calibration.h"
+#include "game_logic/battleship.h"
+
+#include <stdlib.h>
 
 void myUART_Thread(void const *argument);
 extern ARM_DRIVER_USART Driver_USART1;
@@ -50,7 +54,7 @@ void TouchToLCD(int x, int y, int *x_lcd, int *y_lcd) {
 }
 
 bool insideTouchArea(int x, int y) {
-	if (x > 20 && x < 2800 && y > 20 && y < 3500) {
+	if (x > 10 && x < 2800 && y > 10 && y < 3500) {
 		return true;
 	}  
 	return false;
@@ -58,10 +62,6 @@ bool insideTouchArea(int x, int y) {
 
 volatile uint32_t msTicks = 0;
 
-void SysTick_Handler(void) {
-	//USARTdrv->Send("systick", 7);
-	msTicks++;
-}
 
 void wait(uint32_t t) {
 	uint32_t start = msTicks;
@@ -121,6 +121,29 @@ void EINT3_IRQHandler(){
 	LPC_GPIOINT->IO0IntClr = ( 1 << 19 );
 }
 
+volatile Direction dir = RIGHT;
+Direction directions[4] = {DOWN, LEFT, UP, RIGHT};
+
+volatile uint32_t buttonClicks = 0;
+uint32_t debouncerTimer = 0;
+
+void SysTick_Handler(void) {
+	msTicks++;
+	uint32_t button = Buttons_GetState();
+	static uint8_t i = 0;
+	if (button == 1) {
+		if (msTicks < debouncerTimer + 200) {
+			;
+		}
+		else {
+			dir = directions[i];
+			i++;
+			i = i%4;
+			debouncerTimer = msTicks;
+		}
+	}
+}
+
 int main() {
 	int return_code = SysTick_Config(SystemCoreClock/1000);
 	lcdConfiguration();
@@ -135,6 +158,12 @@ int main() {
 	LPC_SC->EXTPOLAR |= ( 0 << 3 );
 	NVIC_EnableIRQ(EINT3_IRQn);
 
+/*	LPC_PINCON->PINSEL4 |= (0x01 << 20);
+	LPC_SC->EXTMODE |= ( 1 << 0 );
+	LPC_SC->EXTPOLAR |= ( 0 << 0 );
+	LPC_SC->EXTINT |= ( 1 << 0 );
+	NVIC_EnableIRQ(EINT0_IRQn);
+	*/
 	USARTdrv->Initialize(NULL);
 	USARTdrv->PowerControl(ARM_POWER_FULL); /*Configure the USART to 4800 Bits/sec */
 	USARTdrv->Control(ARM_USART_MODE_ASYNCHRONOUS | ARM_USART_DATA_BITS_8 | ARM_USART_PARITY_NONE | ARM_USART_STOP_BITS_1 | ARM_USART_FLOW_CONTROL_NONE, 4800); /* Enable Receiver and Transmitter lines */
@@ -145,7 +174,7 @@ int main() {
 	fill(LCDWhite);
 	
 	CalibrationMatrix calib;
-	Point lcd[3] = {{70, 30}, {120,180}, {250, 80}};
+	Point lcd[3] = {{70, 30}, {120,150}, {250, 80}};
 	Point touch[3] = {{}, {}, {}};
 	
 	/*draw_gameboard();
@@ -170,10 +199,20 @@ int main() {
 	wait(2);
 	USARTdrv->Send("\nZZZZZZZ\n", 10);
 	
+	Player player;
+	//Player *player = malloc(sizeof(Player));
+	player_init(&player);
+	
+	const ShipDef *ships = ship_defs();
+	uint8_t curr_ship_idx = 0;
+	
+	uint8_t prev_draw_x = 0;
+	uint8_t prev_draw_y = 0;
+	Direction prev_dir = RIGHT;
 	while (1){
 		switch (state) {
 		//USARTdrv->Send("switch", 6);
-		case CAL: {
+		/*case CAL: {
 				int x;
 				int y;
 				int correct_x[5];
@@ -233,6 +272,54 @@ int main() {
 				touch_pending = 0;
 				LPC_GPIOINT->IO0IntEnF |= (1 << 19);
 				break;
+			}*/
+			case CAL: {
+				#define SAMPLES 50
+				if (!touch_pending) break;
+				touch_pending = 0;
+				
+
+				int x, y;
+				int sum_x = 0, sum_y = 0;
+
+				for (int i = 0; i < SAMPLES; i++) {
+					touchpanelGetXY(&y, &x);
+					if (insideTouchArea(x,y)) {
+						sum_x += x;
+						sum_y += y;
+					}
+					wait(20); // przerwa miedzy próbkami 20ms
+				}
+
+				int avg_x = sum_x / SAMPLES;
+				int avg_y = sum_y / SAMPLES;
+
+				if (insideTouchArea(avg_x, avg_y)) {
+					touch[counter].x = avg_x;
+					touch[counter].y = avg_y;
+					counter++;
+					
+					char str[20] = {0};
+					sprintf(str, "P%d: %d %d\n", counter, avg_x, avg_y);
+					USARTdrv->Send(str, 12);
+
+					WriteChar(lcd[counter-1].x - 4, lcd[counter-1].y - 6, 'O', LCDGreen, 1);
+					wait(2000);
+				}
+
+				if (counter == 3) {
+					calib_calculate(lcd, touch, &calib);
+
+					USARTdrv->Send("git\n", 4);
+					state = START;
+					fill(LCDWhite);	
+					counter = 0;
+				} else {
+					wait(500);
+					// Ponownie wlacz przerwanie na nastepny dotyk
+					LPC_GPIOINT->IO0IntEnF |= (1 << 19);
+				}
+				break;
 			}
 			case START: {
 				/*fill(LCDWhite);
@@ -278,7 +365,6 @@ int main() {
 				USARTdrv->Send("   ", 3);
 				sprintf(str, "%f", calib.f);
 				USARTdrv->Send(str, 8);*/
-				WriteChar(160 - 4, 120 - 6, 'X', LCDBlue, 1);
 				state = SET;
 				break;
 			}
@@ -291,7 +377,34 @@ int main() {
 				touchpanelGetXY(&y, &x);
 				if (insideTouchArea(x,y)) {
 					calib_transform(&calib, y, x, &lcd_x, &lcd_y);
-					//fill_rectangle(lcd_x, lcd_y, LCDRed);
+				
+					uint16_t draw_x = lcd_x / CELL_WIDTH;
+					uint16_t draw_y = (lcd_y+45) / CELL_WIDTH;
+					uint16_t bound_x = START_X/CELL_WIDTH;
+					uint16_t bound_y = START_Y/CELL_WIDTH;
+					if (draw_x < bound_x) {
+						;
+					}
+					else if (draw_x > bound_x + BOARD_SIZE) {
+						;
+					}
+					else if (draw_y < bound_y) {
+						;
+					}
+					else if (draw_y > bound_y + BOARD_SIZE) {
+						;
+					}
+					else {
+						draw_ship( draw_x*CELL_WIDTH, draw_y*CELL_WIDTH, ships[curr_ship_idx].size, dir, LCDRed);
+					}
+					//fill_rectangle(lcd_x-15, lcd_y+45, LCDBlue);
+					
+					if ( prev_draw_x != draw_x || prev_draw_y != draw_y || prev_dir != dir ){
+						draw_ship( prev_draw_x*CELL_WIDTH, prev_draw_y*CELL_WIDTH, ships[curr_ship_idx].size, prev_dir, LCDWhite);
+						prev_draw_x = draw_x;
+						prev_dir = dir;
+						prev_draw_y = draw_y;
+					}
 					char str[3] = {0};
 					sprintf(str, "%d", lcd_x);
 					USARTdrv->Send(str, 4);
