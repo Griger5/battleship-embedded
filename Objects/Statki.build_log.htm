@@ -21,16 +21,12 @@ Target DLL:      UL2CM3.DLL V1.162.7.0
 Dialog DLL:      TCM.DLL V1.36.1.0
  
 <h2>Project:</h2>
-C:\Users\3wiszniowski\Desktop\battleship-embedded\battleship-embedded\battleship-embedded-main\Statki.uvprojx
+C:\Users\3wiszniowski\Desktop\battleship-embedded\battleship-embedded\battleship-embedded\battleship-embedded-main\Statki.uvprojx
 Project File Date:  05/13/2026
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'Target 1'
-compiling battleship.c...
-game_logic\battleship.h(79): warning:  #1-D: last line of file ends without a newline
-  #endif // BATTLESHIP_H
-game_logic\battleship.c: 1 warning, 0 errors
 compiling main.c...
 display.h(23): warning:  #1295-D: Deprecated declaration draw_gameboard - give arg types
   void draw_gameboard();
@@ -38,23 +34,25 @@ display.h(33): warning:  #1-D: last line of file ends without a newline
   #endif
 calibration.h(17): warning:  #1-D: last line of file ends without a newline
   void calib_transform(CalibrationMatrix* matrix, int tx, int ty, int* lcd_x, int* lcd_y);
-game_logic/battleship.h(79): warning:  #1-D: last line of file ends without a newline
-  #endif // BATTLESHIP_H
-main.c(74): warning:  #177-D: variable "counter"  was declared but never referenced
-  	static int counter = 0;
-main.c(350): warning:  #177-D: variable "str"  was declared but never referenced
-  				char str[8] = {0};
-main.c(189): warning:  #177-D: variable "x"  was declared but never referenced
+game_logic/battleship.h(91): warning:  #1-D: last line of file ends without a newline
+  #endif /* BATTLESHIP_H */
+main.c(449): warning:  #167-D: argument of type "uint8_t (*)[3]" is incompatible with parameter of type "const uint8_t (*)[3]"
+                          if (board_get(player.track, shot_row, shot_col) == WATER) {
+main.c(453): warning:  #167-D: argument of type "uint8_t (*)[3]" is incompatible with parameter of type "const uint8_t (*)[3]"
+                                  if (aim_row != -1 && board_get(player.track, aim_row, aim_col) == WATER) {
+main.c(562): warning:  #1-D: last line of file ends without a newline
+  }
+main.c(255): warning:  #177-D: variable "x"  was declared but never referenced
   	int x;
-main.c(190): warning:  #177-D: variable "y"  was declared but never referenced
+main.c(256): warning:  #177-D: variable "y"  was declared but never referenced
   	int y;
-main.c(191): warning:  #177-D: variable "x_lcd"  was declared but never referenced
+main.c(257): warning:  #177-D: variable "x_lcd"  was declared but never referenced
   	int x_lcd;
-main.c(192): warning:  #177-D: variable "y_lcd"  was declared but never referenced
+main.c(258): warning:  #177-D: variable "y_lcd"  was declared but never referenced
   	int y_lcd;
-main.c: 10 warnings, 0 errors
+main.c: 11 warnings, 0 errors
 linking...
-Program Size: Code=14888 RO-data=3880 RW-data=52 ZI-data=820  
+Program Size: Code=18456 RO-data=3880 RW-data=52 ZI-data=836  
 ".\Objects\Statki.axf" - 0 Error(s), 11 Warning(s).
 
 <h2>Software Packages used:</h2>
@@ -109,23 +107,23 @@ Package Vendor: Keil
       Source file:   RTE_Driver\UART_LPC17xx.c
 
    * Component: Keil::Device:GPDMA:1.2.0
-      Include file:  RTE_Driver\GPDMA_LPC17xx.h
       Source file:   RTE_Driver\GPDMA_LPC17xx.c
+      Include file:  RTE_Driver\GPDMA_LPC17xx.h
 
    * Component: Keil::Device:GPIO:1.1.0
-      Include file:  RTE_Driver\GPIO_LPC17xx.h
       Source file:   RTE_Driver\GPIO_LPC17xx.c
+      Include file:  RTE_Driver\GPIO_LPC17xx.h
 
    * Component: Keil::Device:PIN:1.0.0
-      Source file:   RTE_Driver\PIN_LPC17xx.c
       Include file:  RTE_Driver\PIN_LPC17xx.h
+      Source file:   RTE_Driver\PIN_LPC17xx.c
 
    * Component: Keil::Device:Startup:1.0.0
-      Source file:   Device\Source\system_LPC17xx.c
-      Include file:  RTE_Driver\Config\RTE_Device.h
       Include file:  Device\Include\LPC17xx.h
+      Include file:  RTE_Driver\Config\RTE_Device.h
       Source file:   Device\Source\ARM\startup_LPC17xx.s
-Build Time Elapsed:  00:00:01
+      Source file:   Device\Source\system_LPC17xx.c
+Build Time Elapsed:  00:00:00
 </pre>
 </body>
 </html>
